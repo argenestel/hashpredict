@@ -1,15 +1,10 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet } from '@aptos-labs/wallet-adapter-react';
 import Banner from 'components/admin/profile/Banner';
-import General from 'components/admin/profile/General';
-import Notification from 'components/admin/profile/Notification';
-import Project from 'components/admin/profile/Project';
 import Storage from 'components/admin/profile/Storage';
 import Upload from 'components/admin/profile/Upload';
-import { createUmi } from '@metaplex-foundation/umi-bundle-defaults';
-import { mplCore, fetchAssetsByOwner } from '@metaplex-foundation/mpl-core';
-import { walletAdapterIdentity } from '@metaplex-foundation/umi-signer-wallet-adapters';
+import { Aptos, AptosConfig, Network } from '@aptos-labs/ts-sdk';
 import NftCard from 'components/card/NftCard';
 
 const NFTShowcase = ({ nfts }) => {
@@ -17,18 +12,18 @@ const NFTShowcase = ({ nfts }) => {
     <div className="col-span-12 lg:col-span-12">
       <div className="card">
         <div className="card-header">
-          <h4 className="text-lg font-bold text-navy-700 dark:text-white">My NFTs</h4>
+          <h4 className="text-lg font-bold text-navy-700 dark:text-white">My Predictions</h4>
         </div>
         <div className="card-body">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {nfts.map((nft, index) => (
               <NftCard
-                key={nft.publicKey}
+                key={nft.id}
                 image={nft.uri}
                 title={nft.name}
                 author={nft.owner.slice(0, 6) + '...' + nft.owner.slice(-4)}
                 bidders={['/img/avatars/avatar1.png', '/img/avatars/avatar2.png', '/img/avatars/avatar3.png']}
-                price={0} // As price is not available in the provided data, we're setting it to 0
+                price={0}
                 extra=""
               />
             ))}
@@ -38,6 +33,7 @@ const NFTShowcase = ({ nfts }) => {
     </div>
   );
 };
+
 const BlurredSection = ({ children }) => {
   return (
     <div className="relative">
@@ -52,13 +48,16 @@ const BlurredSection = ({ children }) => {
 const ProfileOverview = () => {
   const [userData, setUserData] = useState(null);
   const [userNFTs, setUserNFTs] = useState([]);
-  const wallet = useWallet();
+  const { account, connected } = useWallet();
+
+  const config = new AptosConfig({ network: Network.DEVNET });
+  const aptos = new Aptos(config);
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        if (wallet.publicKey) {
-          const walletAddress = wallet.publicKey.toString();
+        if (connected && account) {
+          const walletAddress = account.address;
           
           // Fetch additional user data (replace with actual API call)
           const additionalData = await fetchAdditionalUserData(walletAddress);
@@ -69,7 +68,7 @@ const ProfileOverview = () => {
           });
           
           // Fetch user's NFTs
-          await fetchUserNFTs(wallet.publicKey);
+          await fetchUserNFTs(walletAddress);
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -77,17 +76,15 @@ const ProfileOverview = () => {
     };
 
     fetchUserData();
-  }, [wallet.publicKey]);
+  }, [connected, account]);
 
-  const fetchUserNFTs = async (publicKey) => {
+  const fetchUserNFTs = async (address) => {
     try {
-      const umi = createUmi(process.env.NEXT_PUBLIC_RPC_ENDPOINT)
-        .use(mplCore())
-        .use(walletAdapterIdentity(wallet));
-
-      const nfts = await fetchAssetsByOwner(umi, publicKey);
+      // Replace this with actual Aptos NFT fetching logic
+      // This is a placeholder and needs to be implemented based on Aptos NFT standards
+      const nfts = await aptos.getAccountResources({ accountAddress: address });
       console.log(nfts);
-      setUserNFTs(nfts);
+      setUserNFTs(nfts.filter(resource => resource.type.includes('::nft::')));
     } catch (error) {
       console.error('Error fetching NFTs:', error);
     }
@@ -100,7 +97,7 @@ const ProfileOverview = () => {
       posts: 17,
       followers: '9.7K',
       following: 434,
-      position: 'Solana Developer',
+      position: 'Aptos Developer',
       bannerUrl: '/img/profile/banner.png',
       avatarUrl: '/img/avatars/avatar11.png',
     };
@@ -117,34 +114,20 @@ const ProfileOverview = () => {
           <Banner user={userData} />
         </div>
 
-        <div className="col-span-3 lg:!mb-0">
+        {/* <div className="col-span-3 lg:!mb-0">
           <BlurredSection>
           <Storage />
           </BlurredSection>
         </div>
 
         <div className="z-0 col-span-5 lg:!mb-0">
-                    <BlurredSection>
-
+          <BlurredSection>
           <Upload />
           </BlurredSection>
-        </div>
+        </div> */}
       </div>
       
       <NFTShowcase nfts={userNFTs} />
-
-      {/* <div className="mb-4 grid h-full grid-cols-1 gap-5 lg:!grid-cols-12">
-        <div className="col-span-5 lg:col-span-6 lg:mb-0 3xl:col-span-4">
-          <Project />
-        </div>
-        <div className="col-span-5 lg:col-span-6 lg:mb-0 3xl:col-span-5">
-          <General />
-        </div>
-
-        <div className="col-span-5 lg:col-span-12 lg:mb-0 3xl:!col-span-3">
-          <Notification />
-        </div>
-      </div> */}
     </div>
   );
 };

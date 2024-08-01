@@ -1,4 +1,4 @@
-module prediction_marketplace::hashpredictalpha1 {
+module prediction_marketplace::hashpredictalpha2 {
     use std::string::{Self, String};
     use aptos_framework::timestamp;
     use aptos_framework::coin;
@@ -16,14 +16,12 @@ module prediction_marketplace::hashpredictalpha1 {
     const E_NOT_AUTHORIZED: u64 = 3;
     const E_PREDICTION_CLOSED: u64 = 4;
     const E_PREDICTION_NOT_ACTIVE: u64 = 5;
-    const E_ALREADY_PREDICTED: u64 = 6;
     const E_INSUFFICIENT_FUNDS: u64 = 7;
     const E_PREDICTION_NOT_FOUND: u64 = 8;
     const E_DIVISION_BY_ZERO: u64 = 9;
     const E_INVALID_SHARE: u64 = 10;
     const E_PREDICTION_ALREADY_RESOLVED: u64 = 11;
     const E_PREDICTION_NOT_RESOLVED: u64 = 12;
-    const E_NOT_WINNER: u64 = 13;
 
     // Enums
     struct State has copy, drop, store {
@@ -40,6 +38,13 @@ module prediction_marketplace::hashpredictalpha1 {
     const RESULT_FALSE: u8 = 1;
     const RESULT_UNDEFINED: u8 = 2;
 
+    const SHARE_AMOUNT: u64 = 1000000;
+
+    struct UserPrediction has store, drop, copy {
+        share: u64,
+        verdict: bool,
+    }
+
     struct PredictionDetails has store, copy, drop {
         id: u64,
         state: State,
@@ -55,14 +60,9 @@ module prediction_marketplace::hashpredictalpha1 {
         total_bet: u64,
     }
 
-    struct UserPrediction has store, drop, copy {
-        share: u64,
-        verdict: bool,
-    }
-
     struct MarketState has key {
         predictions: SimpleMap<u64, PredictionDetails>,
-        user_predictions: Table<address, SimpleMap<u64, UserPrediction>>,
+        user_predictions: Table<address, SimpleMap<u64, vector<UserPrediction>>>,
         admin: address,
         next_prediction_id: u64,
         prediction_created_events: EventHandle<PredictionCreatedEvent>,
@@ -87,12 +87,10 @@ module prediction_marketplace::hashpredictalpha1 {
         prediction_id: u64,
         result: u8,
     }
+
     struct UserTracker has key {
-    users: vector<address>,
-}
-
-
-    const RESOURCE_ACCOUNT_SEED: vector<u8> = b"1234";
+        users: vector<address>,
+    }
 
     public entry fun initialize(admin: &signer) {
         let admin_addr = signer::address_of(admin);
@@ -108,16 +106,16 @@ module prediction_marketplace::hashpredictalpha1 {
             prediction_resolved_events: account::new_event_handle<PredictionResolvedEvent>(admin),
         });
         move_to(admin, UserTracker {
-        users: vector::empty<address>(),
-    });
+            users: vector::empty<address>(),
+        });
     }
 
     fun add_user_to_tracker(user: address) acquires UserTracker {
-    let tracker = borrow_global_mut<UserTracker>(@prediction_marketplace);
-    if (!vector::contains(&tracker.users, &user)) {
-        vector::push_back(&mut tracker.users, user);
+        let tracker = borrow_global_mut<UserTracker>(@prediction_marketplace);
+        if (!vector::contains(&tracker.users, &user)) {
+            vector::push_back(&mut tracker.users, user);
+        }
     }
-}
 
     public entry fun create_prediction(
         account: &signer,
@@ -161,7 +159,7 @@ module prediction_marketplace::hashpredictalpha1 {
         prediction_id: u64,
         verdict: bool,
         share: u64
-    ) acquires MarketState,UserTracker {
+    ) acquires MarketState, UserTracker {
         let account_addr = signer::address_of(account);
         let market_state = borrow_global_mut<MarketState>(@prediction_marketplace);
 
@@ -176,15 +174,13 @@ module prediction_marketplace::hashpredictalpha1 {
             table::add(&mut market_state.user_predictions, account_addr, simple_map::create());
         };
         let user_predictions = table::borrow_mut(&mut market_state.user_predictions, account_addr);
-        assert!(!simple_map::contains_key(user_predictions, &prediction_id), E_ALREADY_PREDICTED);
         
-        let required_amount = if (verdict) {
-            // prediction.yes_price * share
-            share * 1000
-        } else {
-            // prediction.no_price * share
-            share * 1000
+        if (!simple_map::contains_key(user_predictions, &prediction_id)) {
+            simple_map::add(user_predictions, prediction_id, vector::empty<UserPrediction>());
         };
+        let user_prediction_vector = simple_map::borrow_mut(user_predictions, &prediction_id);
+        
+        let required_amount = share * SHARE_AMOUNT;
 
         assert!(coin::balance<AptosCoin>(account_addr) >= required_amount, E_INSUFFICIENT_FUNDS);
 
@@ -195,21 +191,19 @@ module prediction_marketplace::hashpredictalpha1 {
         prediction.total_votes = prediction.total_votes + 1;
         if (verdict) {
             prediction.yes_votes = prediction.yes_votes + 1;
-            prediction.yes_price = prediction.yes_price + required_amount
+            prediction.yes_price = prediction.yes_price + required_amount;
         } else {
             prediction.no_votes = prediction.no_votes + 1;
-             prediction.no_price = prediction.no_price + required_amount
+            prediction.no_price = prediction.no_price + required_amount;
         };
 
-        // Update prices
-        // prediction.yes_price = (prediction.yes_votes * 100) / prediction.total_votes;
-        // prediction.no_price = (prediction.no_votes * 100) / prediction.total_votes;
- 
         // Record prediction
-        simple_map::add(user_predictions, prediction_id, UserPrediction { share, verdict });
-    add_user_to_tracker(account_addr);
+        vector::push_back(user_prediction_vector, UserPrediction { share, verdict });
+
         // Update total bet
         prediction.total_bet = prediction.total_bet + required_amount;
+
+        add_user_to_tracker(account_addr);
 
         event::emit_event(&mut market_state.prediction_made_events, PredictionMadeEvent {
             prediction_id,
@@ -228,7 +222,7 @@ module prediction_marketplace::hashpredictalpha1 {
         
         let prediction = simple_map::borrow_mut(&mut market_state.predictions, &prediction_id);
         assert!(prediction.state.value != STATE_RESOLVED, E_PREDICTION_ALREADY_RESOLVED);
-        assert!(result == RESULT_TRUE || result == RESULT_FALSE, E_INVALID_SHARE); // Reusing E_INVALID_SHARE for invalid result
+        assert!(result == RESULT_TRUE || result == RESULT_FALSE, E_INVALID_SHARE);
 
         prediction.result = result;
         prediction.state = State { value: STATE_RESOLVED };
@@ -280,89 +274,111 @@ module prediction_marketplace::hashpredictalpha1 {
         let user_predictions = table::borrow_mut(&mut market_state.user_predictions, withdrawaladdress);
         assert!(simple_map::contains_key(user_predictions, &prediction_id), E_NOT_AUTHORIZED);
 
-        let (_, user_prediction) = simple_map::remove(user_predictions, &prediction_id);
+        let user_prediction_vector = simple_map::borrow_mut(user_predictions, &prediction_id);
         
-        let is_winner = (user_prediction.verdict && prediction.result == RESULT_TRUE) ||
-                        (!user_prediction.verdict && prediction.result == RESULT_FALSE);
+        let total_winning_amount = 0u64;
+        let i = 0;
+        let len = vector::length(user_prediction_vector);
         
-        assert!(is_winner, E_NOT_WINNER);
-
-        let winning_amount = if (prediction.result == RESULT_TRUE) {
-            assert!(prediction.yes_votes > 0, E_DIVISION_BY_ZERO);
-        (95 * prediction.total_bet * user_prediction.share * 1000) / (100 * prediction.yes_price )
+        while (i < len) {
+            let user_prediction = vector::borrow(user_prediction_vector, i);
+            let is_winner = (user_prediction.verdict && prediction.result == RESULT_TRUE) ||
+                            (!user_prediction.verdict && prediction.result == RESULT_FALSE);
+            
+            if (is_winner) {
+                let winning_amount = if (prediction.result == RESULT_TRUE) {
+                    assert!(prediction.yes_votes > 0, E_DIVISION_BY_ZERO);
+                    (95 * prediction.total_bet * user_prediction.share * SHARE_AMOUNT) / (100 * prediction.yes_price)
                 } else {
-            assert!(prediction.no_votes > 0, E_DIVISION_BY_ZERO);
-             (95 * prediction.total_bet * user_prediction.share * 1000) / (100* prediction.no_price)
+                    assert!(prediction.no_votes > 0, E_DIVISION_BY_ZERO);
+                    (95 * prediction.total_bet * user_prediction.share * SHARE_AMOUNT) / (100 * prediction.no_price)
+                };
+                total_winning_amount = total_winning_amount + winning_amount;
+            };
+            i = i + 1;
         };
 
-        // Transfer funds from the prediction marketplace to the user
-        coin::transfer<AptosCoin>(account, withdrawaladdress, winning_amount);
+        // Transfer total winnings from the prediction marketplace to the user
+        coin::transfer<AptosCoin>(account, withdrawaladdress, total_winning_amount);
+        
+        // Clear the user's predictions for this event
+        simple_map::remove(user_predictions, &prediction_id);
     }
 
-public fun get_all_prediction_addresses(): vector<address> acquires UserTracker {
-    let tracker = borrow_global<UserTracker>(@prediction_marketplace);
-    *&tracker.users
-}
+    public fun get_all_prediction_addresses(): vector<address> acquires UserTracker {
+        let tracker = borrow_global<UserTracker>(@prediction_marketplace);
+        *&tracker.users
+    }
 
-public entry fun mass_withdraw(account: &signer, prediction_id: u64) acquires MarketState, UserTracker {
-    let account_addr = signer::address_of(account);
-    let market_state = borrow_global_mut<MarketState>(@prediction_marketplace);
-    assert!(account_addr == market_state.admin, E_NOT_AUTHORIZED);
+    public entry fun mass_withdraw(account: &signer, prediction_id: u64) acquires MarketState, UserTracker {
+        let account_addr = signer::address_of(account);
+        let market_state = borrow_global_mut<MarketState>(@prediction_marketplace);
+        assert!(account_addr == market_state.admin, E_NOT_AUTHORIZED);
 
-    assert!(simple_map::contains_key(&market_state.predictions, &prediction_id), E_PREDICTION_NOT_FOUND);
-    let prediction = simple_map::borrow(&market_state.predictions, &prediction_id);
+        assert!(simple_map::contains_key(&market_state.predictions, &prediction_id), E_PREDICTION_NOT_FOUND);
+        let prediction = simple_map::borrow(&market_state.predictions, &prediction_id);
 
-    assert!(prediction.state.value == STATE_RESOLVED, E_PREDICTION_NOT_ACTIVE);
-    assert!(prediction.result != RESULT_UNDEFINED, E_PREDICTION_NOT_RESOLVED);
+        assert!(prediction.state.value == STATE_RESOLVED, E_PREDICTION_NOT_ACTIVE);
+        assert!(prediction.result != RESULT_UNDEFINED, E_PREDICTION_NOT_RESOLVED);
 
-    let users = get_all_prediction_addresses();
-    let i = 0;
-    let len = vector::length(&users);
+        let users = get_all_prediction_addresses();
+        let i = 0;
+        let len = vector::length(&users);
 
-    while (i < len) {
-        let user = *vector::borrow(&users, i);
-        if (table::contains(&market_state.user_predictions, user)) {
-            let user_predictions = table::borrow_mut(&mut market_state.user_predictions, user);
-            if (simple_map::contains_key(user_predictions, &prediction_id)) {
-                let user_prediction = simple_map::borrow(user_predictions, &prediction_id);
-                
-                let is_winner = (user_prediction.verdict && prediction.result == RESULT_TRUE) ||
-                                (!user_prediction.verdict && prediction.result == RESULT_FALSE);
-
-                if (is_winner) {
-                    let winning_amount = if (prediction.result == RESULT_TRUE) {
-                        assert!(prediction.yes_votes > 0, E_DIVISION_BY_ZERO);
-        (95 * prediction.total_bet * user_prediction.share * 1000) / (100 * prediction.yes_price )
-                    } else {
-                        assert!(prediction.no_votes > 0, E_DIVISION_BY_ZERO);
-             (95 * prediction.total_bet * user_prediction.share * 1000) / (100* prediction.no_votes)
+        while (i < len) {
+            let user = *vector::borrow(&users, i);
+            if (table::contains(&market_state.user_predictions, user)) {
+                let user_predictions = table::borrow_mut(&mut market_state.user_predictions, user);
+                if (simple_map::contains_key(user_predictions, &prediction_id)) {
+                    let user_prediction_vector = simple_map::borrow_mut(user_predictions, &prediction_id);
+                    
+let total_winning_amount = 0u64;
+                    let j = 0;
+                    let pred_len = vector::length(user_prediction_vector);
+                    
+                    while (j < pred_len) {
+                        let user_prediction = vector::borrow(user_prediction_vector, j);
+                        let is_winner = (user_prediction.verdict && prediction.result == RESULT_TRUE) ||
+                                        (!user_prediction.verdict && prediction.result == RESULT_FALSE);
+                        
+                        if (is_winner) {
+                            let winning_amount = if (prediction.result == RESULT_TRUE) {
+                                assert!(prediction.yes_votes > 0, E_DIVISION_BY_ZERO);
+                                (95 * prediction.total_bet * user_prediction.share * SHARE_AMOUNT) / (100 * prediction.yes_price)
+                            } else {
+                                assert!(prediction.no_votes > 0, E_DIVISION_BY_ZERO);
+                                (95 * prediction.total_bet * user_prediction.share * SHARE_AMOUNT) / (100 * prediction.no_price)
+                            };
+                            total_winning_amount = total_winning_amount + winning_amount;
+                        };
+                        j = j + 1;
                     };
 
-                    // Transfer funds from the prediction marketplace to the user
-                    coin::transfer<AptosCoin>(account, user, winning_amount);
+                    if (total_winning_amount > 0) {
+                        // Transfer winnings from the prediction marketplace to the user
+                        coin::transfer<AptosCoin>(account, user, total_winning_amount);
+                    };
 
                     // Remove the prediction from the user's predictions
                     simple_map::remove(user_predictions, &prediction_id);
                 };
             };
+            i = i + 1;
         };
-        i = i + 1;
-    };
-}
+    }
 
+    // Helper function to check if a user made a prediction
+    #[view]
+    public fun has_user_predicted(user: address, prediction_id: u64): bool acquires MarketState {
+        let market_state = borrow_global<MarketState>(@prediction_marketplace);
+        if (!table::contains(&market_state.user_predictions, user)) {
+            return false
+        };
+        let user_predictions = table::borrow(&market_state.user_predictions, user);
+        simple_map::contains_key(user_predictions, &prediction_id)
+    }
 
-// Helper function to check if a user made a prediction
-#[view]
-public fun has_user_predicted(user: address, prediction_id: u64): bool acquires MarketState {
-    let market_state = borrow_global<MarketState>(@prediction_marketplace);
-    if (!table::contains(&market_state.user_predictions, user)) {
-        return false
-    };
-    let user_predictions = table::borrow(&market_state.user_predictions, user);
-    simple_map::contains_key(user_predictions, &prediction_id)
-}
-
-#[view]
+    #[view]
     public fun get_prediction(prediction_id: u64): PredictionDetails acquires MarketState {
         let market_state = borrow_global<MarketState>(@prediction_marketplace);
         assert!(simple_map::contains_key(&market_state.predictions, &prediction_id), E_PREDICTION_NOT_FOUND);
@@ -370,11 +386,15 @@ public fun has_user_predicted(user: address, prediction_id: u64): bool acquires 
     }
 
     #[view]
-    public fun get_user_prediction(user: address, prediction_id: u64): UserPrediction acquires MarketState {
+    public fun get_user_predictions(user: address, prediction_id: u64): vector<UserPrediction> acquires MarketState {
         let market_state = borrow_global<MarketState>(@prediction_marketplace);
-        assert!(table::contains(&market_state.user_predictions, user), E_NOT_AUTHORIZED);
+        if (!table::contains(&market_state.user_predictions, user)) {
+            return vector::empty<UserPrediction>()
+        };
         let user_predictions = table::borrow(&market_state.user_predictions, user);
-        assert!(simple_map::contains_key(user_predictions, &prediction_id), E_PREDICTION_NOT_FOUND);
+        if (!simple_map::contains_key(user_predictions, &prediction_id)) {
+            return vector::empty<UserPrediction>()
+        };
         *simple_map::borrow(user_predictions, &prediction_id)
     }
 
@@ -395,24 +415,6 @@ public fun has_user_predicted(user: address, prediction_id: u64): bool acquires 
     }
 
     #[view]
-    public fun get_user_predictions(user: address): vector<UserPrediction> acquires MarketState {
-        let market_state = borrow_global<MarketState>(@prediction_marketplace);
-        if (!table::contains(&market_state.user_predictions, user)) {
-            return vector::empty<UserPrediction>()
-        };
-        let user_predictions = table::borrow(&market_state.user_predictions, user);
-        let prediction_ids = simple_map::keys(user_predictions);
-        let result = vector::empty<UserPrediction>();
-        let i = 0;
-        let len = vector::length(&prediction_ids);
-        while (i < len) {
-            let prediction_id = *vector::borrow(&prediction_ids, i);
-            vector::push_back(&mut result, *simple_map::borrow(user_predictions, &prediction_id));
-            i = i + 1;
-        };
-        result
-    }
-    #[view]
     public fun get_user_winnings(user: address, prediction_id: u64): u64 acquires MarketState {
         let market_state = borrow_global<MarketState>(@prediction_marketplace);
         assert!(simple_map::contains_key(&market_state.predictions, &prediction_id), E_PREDICTION_NOT_FOUND);
@@ -429,21 +431,29 @@ public fun has_user_predicted(user: address, prediction_id: u64): bool acquires 
             return 0
         };
 
-        let user_prediction = simple_map::borrow(user_predictions, &prediction_id);
-        let is_winner = (user_prediction.verdict && prediction.result == RESULT_TRUE) ||
-                        (!user_prediction.verdict && prediction.result == RESULT_FALSE);
+        let user_prediction_vector = simple_map::borrow(user_predictions, &prediction_id);
+        let total_winnings = 0u64;
+        let i = 0;
+        let len = vector::length(user_prediction_vector);
+        
+        while (i < len) {
+            let user_prediction = vector::borrow(user_prediction_vector, i);
+            let is_winner = (user_prediction.verdict && prediction.result == RESULT_TRUE) ||
+                            (!user_prediction.verdict && prediction.result == RESULT_FALSE);
 
-        if (!is_winner) {
-            return 0
+            if (is_winner) {
+                let winning_amount = if (prediction.result == RESULT_TRUE) {
+                    (prediction.total_bet * user_prediction.share) / prediction.yes_price
+                } else {
+                    (prediction.total_bet * user_prediction.share) / prediction.no_price
+                };
+                total_winnings = total_winnings + winning_amount;
+            };
+            i = i + 1;
         };
 
-        if (prediction.result == RESULT_TRUE) {
-            (prediction.total_bet * user_prediction.share) / prediction.yes_price
-        } else {
-            (prediction.total_bet * user_prediction.share) / prediction.no_price
-        }
+        total_winnings
     }
-
 
     #[view]
     public fun is_prediction_active(prediction_id: u64): bool acquires MarketState {
@@ -462,7 +472,7 @@ public fun has_user_predicted(user: address, prediction_id: u64): bool acquires 
     }
 
     #[view]
-    public fun get_prediction_stats(prediction_id: u64): (u64, u64, u64, u64, u64,u64) acquires MarketState {
+    public fun get_prediction_stats(prediction_id: u64): (u64, u64, u64, u64, u64, u64) acquires MarketState {
         let market_state = borrow_global<MarketState>(@prediction_marketplace);
         assert!(simple_map::contains_key(&market_state.predictions, &prediction_id), E_PREDICTION_NOT_FOUND);
         let prediction = simple_map::borrow(&market_state.predictions, &prediction_id);
@@ -475,8 +485,6 @@ public fun has_user_predicted(user: address, prediction_id: u64): bool acquires 
             prediction.total_bet,
         )
     }
-
-
 
     #[view]
     public fun get_total_predictions(): u64 acquires MarketState {
