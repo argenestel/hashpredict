@@ -49,7 +49,7 @@ const GameHub = () => {
   const config = new AptosConfig({ network: Network.DEVNET });
   const aptos = new Aptos(config);
 
-  const ADMIN_ADDRESS = '0xe5daef3712e9be57eee01a28e4b16997e89e0b446546d304d5ec71afc9d1bacd';
+  const ADMIN_ADDRESS = '0x5e4a0b20b0d20f701526a21288ae092f7876bb43698aa794c61110099b48bc5b';
 
   useEffect(() => {
     if (connected) {
@@ -61,7 +61,7 @@ const GameHub = () => {
   const fetchPredictions = async () => {
     try {
       const payload: InputViewFunctionData = {
-        function: '0xe5daef3712e9be57eee01a28e4b16997e89e0b446546d304d5ec71afc9d1bacd::hashpredictalpha2::get_all_predictions',
+        function: '0x5e4a0b20b0d20f701526a21288ae092f7876bb43698aa794c61110099b48bc5b::hashpredictalpha::get_all_predictions',
         typeArguments: [],
         functionArguments: []
       };
@@ -82,7 +82,7 @@ const GameHub = () => {
 
     try {
       const payload: InputViewFunctionData = {
-        function: '0xe5daef3712e9be57eee01a28e4b16997e89e0b446546d304d5ec71afc9d1bacd::hashpredictalpha2::get_user_predictions',
+        function: '0x5e4a0b20b0d20f701526a21288ae092f7876bb43698aa794c61110099b48bc5b::hashpredictalpha::get_user_predictions',
         typeArguments: [],
         functionArguments: [account.address]
       };
@@ -115,7 +115,7 @@ const GameHub = () => {
       const response = await signAndSubmitTransaction({
         sender: account.address,
         data: {
-          function: '0xe5daef3712e9be57eee01a28e4b16997e89e0b446546d304d5ec71afc9d1bacd::hashpredictalpha2::predict',
+          function: '0x5e4a0b20b0d20f701526a21288ae092f7876bb43698aa794c61110099b48bc5b::hashpredictalpha::predict',
           typeArguments: [],
           functionArguments: [predictionId, verdict, share],
         },
@@ -141,7 +141,7 @@ const GameHub = () => {
       const response = await signAndSubmitTransaction({
         sender: account.address,
         data: {
-          function: '0xe5daef3712e9be57eee01a28e4b16997e89e0b446546d304d5ec71afc9d1bacd::hashpredictalpha2::create_prediction',
+          function: '0x5e4a0b20b0d20f701526a21288ae092f7876bb43698aa794c61110099b48bc5b::hashpredictalpha::create_prediction',
           typeArguments: [],
           functionArguments: [newPrediction.description, parseInt(newPrediction.duration)],
         },

@@ -1,4 +1,4 @@
-module prediction_marketplace::hashpredictalpha2 {
+module prediction_marketplace::hashpredictalpha {
     use std::string::{Self, String};
     use aptos_framework::timestamp;
     use aptos_framework::coin;

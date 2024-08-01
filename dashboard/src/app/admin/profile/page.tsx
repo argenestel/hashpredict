@@ -69,7 +69,7 @@ const ProfileOverview: React.FC = () => {
   const fetchAllPredictions = async () => {
     try {
       const payload: InputViewFunctionData = {
-        function: '0xe5daef3712e9be57eee01a28e4b16997e89e0b446546d304d5ec71afc9d1bacd::hashpredictalpha2::get_all_predictions',
+        function: '0x5e4a0b20b0d20f701526a21288ae092f7876bb43698aa794c61110099b48bc5b::hashpredictalpha::get_all_predictions',
         typeArguments: [],
         functionArguments: []
       };
@@ -94,7 +94,7 @@ const ProfileOverview: React.FC = () => {
     for (const prediction of userPredictions) {
       try {
         const payload: InputViewFunctionData = {
-          function: '0xe5daef3712e9be57eee01a28e4b16997e89e0b446546d304d5ec71afc9d1bacd::hashpredictalpha2::get_user_winnings',
+          function: '0x5e4a0b20b0d20f701526a21288ae092f7876bb43698aa794c61110099b48bc5b::hashpredictalpha::get_user_winnings',
           typeArguments: [],
           functionArguments: [address, prediction.id]
         };
@@ -111,7 +111,7 @@ const ProfileOverview: React.FC = () => {
   const fetchPredictionStats = async () => {
     try {
       const totalPredictionsPayload: InputViewFunctionData = {
-        function: '0xe5daef3712e9be57eee01a28e4b16997e89e0b446546d304d5ec71afc9d1bacd::hashpredictalpha2::get_total_predictions',
+        function: '0x5e4a0b20b0d20f701526a21288ae092f7876bb43698aa794c61110099b48bc5b::hashpredictalpha::get_total_predictions',
         typeArguments: [],
         functionArguments: []
       };
