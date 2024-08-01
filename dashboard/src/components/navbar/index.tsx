@@ -11,7 +11,7 @@ import {
 } from 'react-icons/io';
 import avatar from '/public/img/avatars/avatar4.png';
 import Image from 'next/image';
-import { WalletDisconnectButton, WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import WalletSelector from 'components/card/WalletButton';
 
 const Navbar = (props: {
   onOpenSidenav: () => void;
@@ -175,7 +175,7 @@ const Navbar = (props: {
             <RiMoonFill className="h-5 w-5 text-gray-600 dark:text-white" />
           )}
         </div>
-        <WalletMultiButton />
+        <WalletSelector />
 
       </div>
     </nav>
