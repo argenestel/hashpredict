@@ -61,7 +61,7 @@ const Navbar = (props: {
         </div> */}
         <p className="text-[20px] capitalize text-navy-700 dark:text-white">
           <NavLink
-            href="#"
+            href="/admin/gamehub"
             className="font-bold capitalize hover:text-navy-700 dark:hover:text-white"
           >
             HashPredict
@@ -108,6 +108,33 @@ const Navbar = (props: {
             <RiMoonFill className="h-5 w-5 text-gray-600 dark:text-white" />
           )}
         </div>
+        <Dropdown
+          button={
+            <Image
+              width="2"
+              height="20"
+              className="h-10 w-10 rounded-full"
+              src={avatar}
+              alt="Elon Musk"
+            />
+          }
+          classNames={'py-2 top-8 -left-[180px] w-max'}
+        >
+          <div className="flex h-max w-56 flex-col justify-start rounded-[20px] bg-white bg-cover bg-no-repeat pb-4 shadow-xl shadow-shadow-500 dark:!bg-navy-700 dark:text-white dark:shadow-none">
+
+            {/* <div className="mt-3 h-px w-full bg-gray-200 dark:bg-white/20 " /> */}
+
+            <div className="ml-4 mt-3 flex flex-col">
+              <a
+                href="/admin/profile"
+                className="text-sm text-gray-800 dark:text-white hover:dark:text-white"
+              >
+                Profile Settings
+              </a>
+
+            </div>
+          </div>
+        </Dropdown>
         <WalletSelector />
       </div>
     </nav>

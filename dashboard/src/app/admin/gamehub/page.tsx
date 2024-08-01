@@ -1,10 +1,10 @@
 'use client'
 import React, { useState, useEffect } from 'react';
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
-import { Aptos, AptosConfig, InputViewFunctionData, Network } from '@aptos-labs/ts-sdk';
+import { Aptos, AptosConfig, InputViewFunctionData, Network, MoveValue } from '@aptos-labs/ts-sdk';
 import { IoClose, IoAdd, IoRemove } from 'react-icons/io5';
 import PredictionCard from 'components/card/PredictionCard';
-// import ProfileOverview from './ProfileOverView';
+
 const Modal = ({ isOpen, onClose, children }) => {
   if (!isOpen) return null;
   return (
@@ -19,15 +19,32 @@ const Modal = ({ isOpen, onClose, children }) => {
   );
 };
 
+interface Prediction {
+  id: string;
+  description: string;
+  state: { value: number };
+  end_time: string;
+  yes_votes: string;
+  no_votes: string;
+  yes_price: string;
+  no_price: string;
+  total_bet: string;
+}
+
+interface UserPrediction {
+  id: string;
+  share: number;
+  verdict: boolean;
+}
+
 const GameHub = () => {
   const { connect, account, connected, disconnect, signAndSubmitTransaction } = useWallet();
-  const [predictions, setPredictions] = useState([]);
-  const [userPredictions, setUserPredictions] = useState({});
+  const [predictions, setPredictions] = useState<Prediction[]>([]);
+  const [userPredictions, setUserPredictions] = useState<Record<string, UserPrediction[]>>({});
   const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [newPrediction, setNewPrediction] = useState({ description: '', duration: '' });
   const [filter, setFilter] = useState('active');
-  const [showProfile, setShowProfile] = useState(false);
 
   const config = new AptosConfig({ network: Network.DEVNET });
   const aptos = new Aptos(config);
@@ -50,7 +67,7 @@ const GameHub = () => {
       };
       
       const result = await aptos.view({ payload });
-      const flattenedPredictions = result.flat();
+      const flattenedPredictions = result.flat() as Prediction[];
       setPredictions(flattenedPredictions);
       setLoading(false);
     } catch (error) {
@@ -72,12 +89,15 @@ const GameHub = () => {
       
       const result = await aptos.view({ payload });
       console.log(result);
-      const userPredictionsMap = {};
-      result.forEach(prediction => {
-        if (!userPredictionsMap[prediction.id]) {
-          userPredictionsMap[prediction.id] = [];
+      const userPredictionsMap: Record<string, UserPrediction[]> = {};
+      (result as MoveValue[]).forEach((prediction: MoveValue) => {
+        if (typeof prediction === 'object' && 'id' in prediction) {
+          const id = (prediction as { id: string }).id;
+          if (!userPredictionsMap[id]) {
+            userPredictionsMap[id] = [];
+          }
+          userPredictionsMap[id].push(prediction as UserPrediction);
         }
-        userPredictionsMap[prediction.id].push(prediction);
       });
       setUserPredictions(userPredictionsMap);
     } catch (error) {
@@ -85,7 +105,7 @@ const GameHub = () => {
     }
   };
 
-  const handlePredict = async (predictionId, verdict, share) => {
+  const handlePredict = async (predictionId: string, verdict: boolean, share: number) => {
     if (!connected) {
       alert('Please connect your wallet first');
       return;
@@ -160,23 +180,18 @@ const GameHub = () => {
         <select 
           value={filter} 
           onChange={(e) => setFilter(e.target.value)}
-          className="px-4 py-2 bg-white dark:bg-navy-800 text-gray-700 dark:text-gray-300 rounded-lg border dark:border-navy-600"
+          className="px-4 py-2 bg-white dark:text-white dark:bg-navy-800 text-gray-700  rounded-lg border dark:border-navy-600"
         >
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-          <option value="all">All</option>
+          <option value="active" className='dark:text-white'>Active</option>
+          <option value="inactive" className='dark:text-white'>Inactive</option>
+          <option value="all" className='dark:text-white'>All</option>
         </select>
         {isAdmin && (
           <button onClick={() => setIsCreateModalOpen(true)} className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
             Create New Prediction
           </button>
         )}
-        {/* <button onClick={() => setShowProfile(!showProfile)} className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
-          {showProfile ? 'Hide Profile' : 'Show Profile'}
-        </button> */}
       </div>
-
-      {/* {showProfile && <ProfileOverview />} */}
 
       {loading ? (
         <p className="text-center text-gray-600">Loading predictions...</p>
