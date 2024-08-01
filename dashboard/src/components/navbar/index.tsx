@@ -93,12 +93,11 @@ const Navbar = (props: {
           <FiAlignJustify className="h-5 w-5" />
         </span>
         {/* Notification */}
-        <Dropdown
+        {/* <Dropdown
           button={<IoMdNotificationsOutline className="h-5 w-5 text-gray-600 dark:text-white cursor-pointer" />}
           animation="origin-[65%_0%] md:origin-top-right transition-all duration-300 ease-in-out"
           classNames={'py-2 top-4 -left-[230px] md:-left-[440px] w-max'} children={undefined}        >
-          {/* Notification dropdown content */}
-        </Dropdown>
+        </Dropdown> */}
         <div
           className="cursor-pointer text-gray-600"
           onClick={toggleDarkMode}
