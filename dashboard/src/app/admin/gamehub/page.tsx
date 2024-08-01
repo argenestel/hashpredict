@@ -2,14 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
 import { Aptos, AptosConfig, InputViewFunctionData, Network } from '@aptos-labs/ts-sdk';
-import { IoClose } from 'react-icons/io5';
+import { IoClose, IoAdd,  IoRemove} from 'react-icons/io5';
 
 const Modal = ({ isOpen, onClose, children }) => {
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl p-6 w-full max-w-md relative">
-        <button onClick={onClose} className="absolute top-2 right-2 text-gray-500 hover:text-gray-700">
+      <div className="bg-white dark:bg-navy-900 dark:text-white rounded-xl p-6 w-full max-w-md relative">
+        <button onClick={onClose} className="absolute top-2 right-2 text-gray-500  hover:text-gray-700">
           <IoClose size={24} />
         </button>
         {children}
@@ -19,46 +19,113 @@ const Modal = ({ isOpen, onClose, children }) => {
 };
 
 const PredictionCard = ({ prediction, onPredict }) => {
-  const { yes_votes, no_votes, yes_price, no_price, state, description, id, end_time } = prediction;
-  const total_votes = parseInt(yes_votes) + parseInt(no_votes);
-  const yesPercentage = total_votes > 0 ? (parseInt(yes_votes) / total_votes) * 100 : 50;
+  const [shareAmount, setShareAmount] = useState(1);
+  const [isYesSelected, setIsYesSelected] = useState(true);
+
+  const handleIncrement = () => setShareAmount(prev => prev + 1);
+  const handleDecrement = () => setShareAmount(prev => Math.max(1, prev - 1));
+
+  const handlePredict = () => {
+    onPredict(prediction.id, isYesSelected, shareAmount);
+  };
 
   const formatTime = (timestamp) => {
     return new Date(parseInt(timestamp) * 1000).toLocaleString();
   };
 
-  const isActive = state && state.value === 0;
-  const timeRemaining = parseInt(end_time) * 1000 - Date.now();
-  const daysRemaining = Math.max(0, Math.floor(timeRemaining / (1000 * 60 * 60 * 24)));
+  const calculatePercentage = (votes, total) => {
+    return total > 0 ? (votes / total) * 100 : 50;
+  };
+
+  const yesPercentage = calculatePercentage(prediction.yes_votes, prediction.total_votes);
+  const noPercentage = calculatePercentage(prediction.no_votes, prediction.total_votes);
+
+  const isActive = prediction.state.value === 0; // Assuming 0 represents the active state
 
   return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden">
+    <div className="bg-white dark:bg-navy-800 rounded-xl shadow-md overflow-hidden transition-colors duration-200">
       <div className="p-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">{description}</h2>
-        <p className="text-gray-600 mb-2">Total Votes: {total_votes}</p>
-        <p className="text-gray-600 mb-2">End Time: {formatTime(end_time)}</p>
-        {isActive && <p className="text-blue-600 mb-4">Days Remaining: {daysRemaining}</p>}
+        <h2 className="text-2xl font-bold text-navy-700 dark:text-white mb-2">{prediction.description}</h2>
+        <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">ID: {prediction.id}</p>
+        <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">End Time: {formatTime(prediction.end_time)}</p>
+        
         <div className="flex justify-between mb-2">
-          <span className="text-green-600 font-semibold">Yes: {yes_votes} (Price: {yes_price})</span>
-          <span className="text-red-600 font-semibold">No: {no_votes} (Price: {no_price})</span>
+          <span className="text-brand-500 dark:text-brand-400 font-semibold">Yes: {prediction.yes_votes}</span>
+          <span className="text-red-500 dark:text-red-400 font-semibold">No: {prediction.no_votes}</span>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
-          <div className="bg-green-600 h-2.5 rounded-full" style={{ width: `${yesPercentage}%` }}></div>
+        
+        <div className="w-full bg-gray-200 dark:bg-navy-700 rounded-full h-2.5 mb-4">
+          <div 
+            className="bg-brand-500 dark:bg-brand-400 h-2.5 rounded-full transition-all duration-300 ease-in-out" 
+            style={{ width: `${yesPercentage}%` }}
+          />
         </div>
+        
         {isActive && (
-          <div className="flex justify-between space-x-2">
-            <button onClick={() => onPredict(id, true)} className="flex-1 bg-green-500 text-white rounded-lg px-4 py-2 hover:bg-green-600 transition-colors">
-              Bet Yes
+          <>
+            <div className="flex justify-between mb-4">
+              <button 
+                onClick={() => setIsYesSelected(true)}
+                className={`flex-1 py-2 px-4 rounded-l-lg transition-colors duration-200 ${
+                  isYesSelected 
+                    ? 'bg-brand-500 dark:bg-brand-400 text-white' 
+                    : 'bg-gray-200 dark:bg-navy-700 text-gray-700 dark:text-gray-300'
+                }`}
+              >
+                Yes
+              </button>
+              <button 
+                onClick={() => setIsYesSelected(false)}
+                className={`flex-1 py-2 px-4 rounded-r-lg transition-colors duration-200 ${
+                  !isYesSelected 
+                    ? 'bg-red-500 dark:bg-red-400 text-white' 
+                    : 'bg-gray-200 dark:bg-navy-700 text-gray-700 dark:text-gray-300'
+                }`}
+              >
+                No
+              </button>
+            </div>
+            
+            <div className="flex items-center justify-between mb-4">
+              <button 
+                onClick={handleDecrement}
+                className="bg-gray-200 dark:bg-navy-700 text-gray-700 dark:text-gray-300 rounded-full p-2 transition-colors duration-200"
+              >
+                <IoRemove size={20} />
+              </button>
+              <input 
+                type="number" 
+                value={shareAmount}
+                onChange={(e) => setShareAmount(Math.max(1, parseInt(e.target.value) || 1))}
+                className="w-20 text-center border dark:border-navy-600 rounded-lg py-2 bg-white dark:bg-navy-900 text-gray-700 dark:text-gray-300"
+              />
+              <button 
+                onClick={handleIncrement}
+                className="bg-gray-200 dark:bg-navy-700 text-gray-700 dark:text-gray-300 rounded-full p-2 transition-colors duration-200"
+              >
+                <IoAdd size={20} />
+              </button>
+            </div>
+            
+            <button 
+              onClick={handlePredict}
+              className="w-full bg-brand-500 dark:bg-brand-400 text-white rounded-lg py-2 px-4 hover:bg-brand-600 dark:hover:bg-brand-500 transition-colors duration-200"
+            >
+              Place Prediction
             </button>
-            <button onClick={() => onPredict(id, false)} className="flex-1 bg-red-500 text-white rounded-lg px-4 py-2 hover:bg-red-600 transition-colors">
-              Bet No
-            </button>
+          </>
+        )}
+        
+        {!isActive && (
+          <div className="text-center text-gray-600 dark:text-gray-400 mt-4">
+            This prediction is no longer active.
           </div>
         )}
       </div>
     </div>
   );
 };
+
 
 const GameHub = () => {
   const { connect, account, connected, disconnect, signAndSubmitTransaction } = useWallet();

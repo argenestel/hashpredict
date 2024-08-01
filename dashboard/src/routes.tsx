@@ -18,27 +18,27 @@ const routes = [
     path: 'gamehub',
     icon: <MdHome className="h-6 w-6" />,
   },
-  {
-    name: 'MarketPlace',
-    layout: '/admin',
-    path: 'nft-marketplace',
-    icon: <MdOutlineShoppingCart className="h-6 w-6" />,
-    secondary: true,
-  },
-  {
-    name: 'Worlds',
-    layout: '/admin',
-    path: 'explore-worlds',
-    icon: <IoEarth className="h-6 w-6" />,
+  // {
+  //   name: 'MarketPlace',
+  //   layout: '/admin',
+  //   path: 'nft-marketplace',
+  //   icon: <MdOutlineShoppingCart className="h-6 w-6" />,
+  //   secondary: true,
+  // },
+  // {
+  //   name: 'Worlds',
+  //   layout: '/admin',
+  //   path: 'explore-worlds',
+  //   icon: <IoEarth className="h-6 w-6" />,
 
-  },
-  {
-    name: 'Create',
-    layout: '/admin',
-    path: 'create-world',
-    icon: <IoEarth className="h-6 w-6" />,
+  // },
+  // {
+  //   name: 'Create',
+  //   layout: '/admin',
+  //   path: 'create-world',
+  //   icon: <IoEarth className="h-6 w-6" />,
 
-  },
+  // },
   // {
   //   name: 'Data Tables',
   //   layout: '/admin',
