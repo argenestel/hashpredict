@@ -46,7 +46,7 @@ const GameHub = () => {
   const [newPrediction, setNewPrediction] = useState({ description: '', duration: '' });
   const [filter, setFilter] = useState('active');
 
-  const config = new AptosConfig({ network: Network.DEVNET });
+  const config = new AptosConfig({ network: Network.TESTNET });
   const aptos = new Aptos(config);
 
   const ADMIN_ADDRESS = '0x5e4a0b20b0d20f701526a21288ae092f7876bb43698aa794c61110099b48bc5b';

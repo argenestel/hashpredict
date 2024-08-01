@@ -36,7 +36,7 @@ const ProfileOverview: React.FC = () => {
   });
   const { account, connected } = useWallet();
 
-  const config = new AptosConfig({ network: Network.DEVNET });
+  const config = new AptosConfig({ network: Network.TESTNET });
   const aptos = new Aptos(config);
 
   useEffect(() => {

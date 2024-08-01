@@ -13,7 +13,7 @@ function Wallet({ children }: { children: React.ReactNode }) {
       plugins={wallets}
       autoConnect={true}
       optInWallets={["Petra"]}
-      dappConfig={{ network: Network.DEVNET, aptosConnectDappId: "c9f9642d-cac0-4399-b2cc-2e79057da812" }}
+      dappConfig={{ network: Network.TESTNET, aptosConnectDappId: "c9f9642d-cac0-4399-b2cc-2e79057da812" }}
       >{children}
         </AptosWalletAdapterProvider>
     );
