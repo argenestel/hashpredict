@@ -7,14 +7,19 @@ import {Network} from "@aptos-labs/ts-sdk";
 function Wallet({ children }: { children: React.ReactNode }) {
     // Can be set to 'devnet', 'testnet', or 'mainnet-beta'
     const wallets = [new PetraWallet()];
-      
     return (
+     
       <AptosWalletAdapterProvider
       plugins={wallets}
-      autoConnect={true}
-      optInWallets={["Petra"]}
-      dappConfig={{ network: Network.TESTNET, aptosConnectDappId: "c9f9642d-cac0-4399-b2cc-2e79057da812" }}
-      >{children}
+      dappConfig={{
+        network: Network.TESTNET,
+        aptosConnectDappId: "57fa42a9-29c6-4f1e-939c-4eefa36d9ff5",
+        mizuwallet: {
+          manifestURL:
+            "https://assets.mz.xyz/static/config/mizuwallet-connect-manifest.json",
+        },
+      }}>
+      {children}
         </AptosWalletAdapterProvider>
     );
   }

@@ -69,7 +69,7 @@ const Navbar = (props: {
         </p>
       </div>
 
-      <div className="flex items-center space-x-2 mb-2">
+      {/* <div className="flex items-center space-x-2 mb-2">
         {categories.map((category) => (
           <button
             key={category}
@@ -83,7 +83,7 @@ const Navbar = (props: {
             {category}
           </button>
         ))}
-      </div>
+      </div> */}
 
       <div className="relative flex w-full max-w-3xl items-center justify-between gap-2 rounded-full bg-white px-2 py-2 shadow-xl dark:bg-navy-800 md:w-auto">
         <span

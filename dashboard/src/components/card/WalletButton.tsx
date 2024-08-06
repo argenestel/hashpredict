@@ -9,7 +9,7 @@ const WalletButton = ({ name, icon, onClick }) => (
   >
     <div className="flex items-center">
       <img src={icon} alt={name} className="w-8 h-8 mr-3" />
-      <span className="text-lg font-medium dark:text-white">{name}</span>
+      <span className="text-sm font-medium dark:text-white">{name}</span>
     </div>
     <span className="text-sm text-gray-500 dark:text-gray-400">Connect</span>
   </button>
