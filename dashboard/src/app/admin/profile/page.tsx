@@ -150,7 +150,7 @@ const ProfileOverview: React.FC = () => {
   };
 
   if (!userData) {
-    return <div>Please connect your wallet to view your profile.</div>;
+    return <div className='dark:text-white text-blueSecondary font-bold mt-10 mx-5'>Please connect your wallet to view your profile.</div>;
   }
 
   const tableData = Array.isArray(userPredictions) ? userPredictions.map((prediction: PredictionDetails) => ({

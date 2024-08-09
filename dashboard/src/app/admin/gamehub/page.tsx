@@ -2,8 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
 import { Aptos, AptosConfig, InputViewFunctionData, Network, MoveValue } from '@aptos-labs/ts-sdk';
-import { IoClose, IoAdd, IoRemove } from 'react-icons/io5';
+import { IoClose, IoAdd, IoRemove, IoCreate, IoFilter } from 'react-icons/io5';
 import PredictionCard from 'components/card/PredictionCard';
+import { motion } from 'framer-motion';
 
 const Modal = ({ isOpen, onClose, children }) => {
   if (!isOpen) return null;
@@ -55,13 +56,17 @@ const GameHub = () => {
     if (connected) {
       fetchPredictions();
       fetchUserPredictions();
+    } 
+    else {
+      fetchPredictions();
+
     }
   }, [connected]);
 
   const fetchPredictions = async () => {
     try {
       const payload: InputViewFunctionData = {
-        function: '0x5e4a0b20b0d20f701526a21288ae092f7876bb43698aa794c61110099b48bc5b::hashpredictalpha::get_all_predictions',
+        function: `${ADMIN_ADDRESS}::hashpredictalpha::get_all_predictions`,
         typeArguments: [],
         functionArguments: []
       };
@@ -82,7 +87,7 @@ const GameHub = () => {
 
     try {
       const payload: InputViewFunctionData = {
-        function: '0x5e4a0b20b0d20f701526a21288ae092f7876bb43698aa794c61110099b48bc5b::hashpredictalpha::get_user_predictions',
+        function:  `${ADMIN_ADDRESS}::hashpredictalpha::get_user_predictions`,
         typeArguments: [],
         functionArguments: [account.address]
       };
@@ -115,7 +120,7 @@ const GameHub = () => {
       const response = await signAndSubmitTransaction({
         sender: account.address,
         data: {
-          function: '0x5e4a0b20b0d20f701526a21288ae092f7876bb43698aa794c61110099b48bc5b::hashpredictalpha::predict',
+          function:  `${ADMIN_ADDRESS}::hashpredictalpha::predict`,
           typeArguments: [],
           functionArguments: [predictionId, verdict, share],
         },
@@ -141,7 +146,7 @@ const GameHub = () => {
       const response = await signAndSubmitTransaction({
         sender: account.address,
         data: {
-          function: '0x5e4a0b20b0d20f701526a21288ae092f7876bb43698aa794c61110099b48bc5b::hashpredictalpha::create_prediction',
+          function:  `${ADMIN_ADDRESS}::hashpredictalpha::create_prediction`,
           typeArguments: [],
           functionArguments: [newPrediction.description, parseInt(newPrediction.duration)],
         },
@@ -170,33 +175,50 @@ const GameHub = () => {
   const isAdmin = connected && account?.address === ADMIN_ADDRESS;
 
   return (
-    <div className="flex flex-col items-center pt-20 px-4">
-      <div className="text-center mb-10">
-        <h1 className="text-4xl font-bold dark:text-white text-blueSecondary mb-4">Prediction Marketplace</h1>
-        <p className="text-lg dark:text-gray-200 text-blueSecondary">Create and Participate in Exciting Predictions</p>
-      </div>
-
-      <div className="flex justify-center space-x-4 mb-8">
-        <select 
-          value={filter} 
-          onChange={(e) => setFilter(e.target.value)}
-          className="px-4 py-2 bg-white dark:text-white dark:bg-navy-800 text-gray-700  rounded-lg border dark:border-navy-600"
-        >
-          <option value="active" className='dark:text-white'>Active</option>
-          <option value="inactive" className='dark:text-white'>Inactive</option>
-          <option value="all" className='dark:text-white'>All</option>
-        </select>
+    <div className="flex flex-col items-center pt-10 px-4 min-h-screen bg-gray-100 dark:bg-navy-900">
+    <motion.div
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="w-full max-w-7xl"
+    >
+      <div className="flex justify-between items-center mb-8">
+        <div className="flex items-center space-x-4">
+          <IoFilter size={24} className="text-gray-600 dark:text-gray-300" />
+          <select 
+            value={filter} 
+            onChange={(e) => setFilter(e.target.value)}
+            className="px-4 py-2 bg-white dark:bg-navy-800 text-gray-700 dark:text-white rounded-lg border dark:border-navy-600 focus:outline-none focus:ring-2 focus:ring-brand-500"
+          >
+            <option className='dark:text-white' value="active">Active</option>
+            <option className='dark:text-white' value="inactive">Inactive</option>
+            <option className='dark:text-white'  value="all">All</option>
+          </select>
+        </div>
         {isAdmin && (
-          <button onClick={() => setIsCreateModalOpen(true)} className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
-            Create New Prediction
-          </button>
+          <motion.button 
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setIsCreateModalOpen(true)} 
+            className="px-6 py-3 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors flex items-center space-x-2"
+          >
+            <IoCreate size={20} />
+            <span>Create New Prediction</span>
+          </motion.button>
         )}
       </div>
 
       {loading ? (
-        <p className="text-center text-gray-600">Loading predictions...</p>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-brand-500"></div>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 w-full max-w-7xl">
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 w-full mb-16"
+        >
           {filteredPredictions.map((prediction) => (
             <PredictionCard
               key={prediction.id}
@@ -205,30 +227,50 @@ const GameHub = () => {
               userPredictions={userPredictions[prediction.id] || []}
             />
           ))}
-        </div>
+        </motion.div>
       )}
+    </motion.div>
 
-      <Modal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)}>
-        <h3 className="text-xl font-bold mb-4">Create New Prediction</h3>
-        <input
-          type="text"
-          placeholder="Prediction description"
-          value={newPrediction.description}
-          onChange={(e) => setNewPrediction({ ...newPrediction, description: e.target.value })}
-          className="w-full dark:bg-navy-700 p-2 mb-4 border rounded"
-        />
-        <input
-          type="number"
-          placeholder="Duration in seconds"
-          value={newPrediction.duration}
-          onChange={(e) => setNewPrediction({ ...newPrediction, duration: e.target.value })}
-          className="w-full dark:bg-navy-700 p-2 mb-4 border rounded"
-        />
-        <button onClick={handleCreatePrediction} className="w-full bg-green-500 text-white rounded-lg px-4 py-2 hover:bg-green-600 transition-colors">
-          Create Prediction
-        </button>
-      </Modal>
-    </div>
+    <Modal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)}>
+      <h3 className="text-2xl font-bold mb-6 text-center">Create New Prediction</h3>
+      <div className="space-y-4">
+        <div>
+          <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Prediction Description
+          </label>
+          <input
+            id="description"
+            type="text"
+            placeholder="Enter prediction description"
+            value={newPrediction.description}
+            onChange={(e) => setNewPrediction({ ...newPrediction, description: e.target.value })}
+            className="w-full dark:bg-navy-800 p-3 border border-gray-300 dark:border-navy-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+          />
+        </div>
+        <div>
+          <label htmlFor="duration" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Duration (in seconds)
+          </label>
+          <input
+            id="duration"
+            type="number"
+            placeholder="Enter duration"
+            value={newPrediction.duration}
+            onChange={(e) => setNewPrediction({ ...newPrediction, duration: e.target.value })}
+            className="w-full dark:bg-navy-800 p-3 border border-gray-300 dark:border-navy-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+          />
+        </div>
+      </div>
+      <motion.button 
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={handleCreatePrediction} 
+        className="w-full mt-6 bg-brand-500 text-white rounded-lg px-4 py-3 hover:bg-brand-600 transition-colors font-semibold"
+      >
+        Create Prediction
+      </motion.button>
+    </Modal>
+  </div>
   );
 };
 

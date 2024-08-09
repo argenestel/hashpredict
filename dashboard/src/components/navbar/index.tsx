@@ -40,34 +40,7 @@ const Navbar = (props: {
 
   return (
     <nav className="sticky top-4 z-40 px-4 flex flex-wrap items-center justify-between rounded-xl bg-white/10 p-2 backdrop-blur-xl dark:bg-[#0b14374d]">
-      <div className=" flex flex-col justify-left">
-        {/* <div className="h-6">
-          <a
-            className="text-sm font-normal text-navy-700 hover:underline dark:text-white"
-            href=" "
-          >
-            Pages
-            <span className="mx-1 text-sm text-navy-700 dark:text-white">
-              {' '}
-              /{' '}
-            </span>
-          </a>
-          <NavLink
-            className="text-sm font-normal capitalize text-navy-700 hover:underline dark:text-white"
-            href="#"
-          >
-            {brandText}
-          </NavLink>
-        </div> */}
-        <p className="text-[20px] capitalize text-navy-700 dark:text-white">
-          <NavLink
-            href="/admin/gamehub"
-            className="font-bold capitalize hover:text-navy-700 dark:hover:text-white"
-          >
-            HashPredict
-          </NavLink>
-        </p>
-      </div>
+
 
       {/* <div className="flex items-center space-x-2 mb-2">
         {categories.map((category) => (
@@ -86,18 +59,21 @@ const Navbar = (props: {
       </div> */}
 
       <div className="relative flex w-full max-w-3xl items-center justify-between gap-2 rounded-full bg-white px-2 py-2 shadow-xl dark:bg-navy-800 md:w-auto">
-        <span
+        {/* <span
           className="flex cursor-pointer text-xl text-gray-600 dark:text-white xl:hidden"
           onClick={onOpenSidenav}
         >
           <FiAlignJustify className="h-5 w-5" />
-        </span>
+        </span> */}
         {/* Notification */}
         {/* <Dropdown
           button={<IoMdNotificationsOutline className="h-5 w-5 text-gray-600 dark:text-white cursor-pointer" />}
           animation="origin-[65%_0%] md:origin-top-right transition-all duration-300 ease-in-out"
           classNames={'py-2 top-4 -left-[230px] md:-left-[440px] w-max'} children={undefined}        >
         </Dropdown> */}
+        <div className='dark:text-white  font-bold text-blueSecondary ml-2'>
+        HashPredict
+        </div>
         <div
           className="cursor-pointer text-gray-600"
           onClick={toggleDarkMode}
@@ -108,7 +84,7 @@ const Navbar = (props: {
             <RiMoonFill className="h-5 w-5 text-gray-600 dark:text-white" />
           )}
         </div>
-        <Dropdown
+        {/* <Dropdown
           button={
             <Image
               width="2"
@@ -119,12 +95,12 @@ const Navbar = (props: {
             />
           }
           classNames={'py-2 top-8 -left-[180px] w-max'}
-        >
-          <div className="flex h-max w-56 flex-col justify-start rounded-[20px] bg-white bg-cover bg-no-repeat pb-4 shadow-xl shadow-shadow-500 dark:!bg-navy-700 dark:text-white dark:shadow-none">
+        > */}
+          {/* <div className="flex h-max w-56 flex-col justify-start rounded-[20px] bg-white bg-cover bg-no-repeat pb-4 shadow-xl shadow-shadow-500 dark:!bg-navy-700 dark:text-white dark:shadow-none"> */}
 
             {/* <div className="mt-3 h-px w-full bg-gray-200 dark:bg-white/20 " /> */}
 
-            <div className="ml-4 mt-3 flex flex-col">
+            {/* <div className="ml-4 mt-3 flex flex-col">
               <a
                 href="/admin/profile"
                 className="text-sm text-gray-800 dark:text-white hover:dark:text-white"
@@ -134,7 +110,7 @@ const Navbar = (props: {
 
             </div>
           </div>
-        </Dropdown>
+        </Dropdown> */}
         <WalletSelector />
       </div>
     </nav>

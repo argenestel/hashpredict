@@ -6,6 +6,7 @@ import routes from 'routes';
 import { getActiveRoute, isWindowAvailable } from 'utils/navigation';
 import React from 'react';
 import Navbar from 'components/navbar';
+import BottomNav from 'components/navbar/bottomnav';
 
 export default function Admin({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -25,6 +26,9 @@ export default function Admin({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </main>
+      <div>
+      <BottomNav />
+      </div>
     </div>
   );
 }
