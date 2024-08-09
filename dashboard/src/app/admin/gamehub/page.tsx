@@ -203,7 +203,7 @@ const GameHub = () => {
             className="px-6 py-3 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors flex items-center space-x-2"
           >
             <IoCreate size={20} />
-            <span>Create New Prediction</span>
+            <span>Create</span>
           </motion.button>
         )}
       </div>
