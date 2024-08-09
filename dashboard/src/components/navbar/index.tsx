@@ -11,6 +11,7 @@ import {
 import avatar from '/public/img/avatars/avatar4.png';
 import Image from 'next/image';
 import WalletSelector from 'components/card/WalletButton';
+import { motion } from 'framer-motion';
 
 const categories = ['All', 'Olympics', 'Politics', 'Technology', 'Entertainment', 'Sports'];
 
@@ -39,8 +40,12 @@ const Navbar = (props: {
   };
 
   return (
-    <nav className="sticky top-4 z-40 px-4 flex flex-wrap items-center justify-between rounded-xl bg-white/10 p-2 backdrop-blur-xl dark:bg-[#0b14374d]">
-
+    <motion.nav 
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+      className="fixed top-2 left-1 right-1 z-40 px-4 py-2 bg-white/10 backdrop-blur-xl dark:bg-[#0b14374d] rounded-full shadow-xl"
+    >
 
       {/* <div className="flex items-center space-x-2 mb-2">
         {categories.map((category) => (
@@ -58,7 +63,7 @@ const Navbar = (props: {
         ))}
       </div> */}
 
-      <div className="relative flex w-full max-w-3xl items-center justify-between gap-2 rounded-full bg-white px-2 py-2 shadow-xl dark:bg-navy-800 md:w-auto">
+      <div className="relative flex w-full max-w-3xl items-center justify-between gap-2   md:w-auto">
         {/* <span
           className="flex cursor-pointer text-xl text-gray-600 dark:text-white xl:hidden"
           onClick={onOpenSidenav}
@@ -113,7 +118,7 @@ const Navbar = (props: {
         </Dropdown> */}
         <WalletSelector />
       </div>
-    </nav>
+    </motion.nav>
   );
 };
 

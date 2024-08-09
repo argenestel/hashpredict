@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "@aptos-connect/wallet-adapter-plugin": "^1.0.1",
+    "@aptos-labs/aptos-faucet-client": "^0.2.0",
     "@aptos-labs/ts-sdk": "^1.26.0",
     "@aptos-labs/wallet-adapter-react": "^3.5.9",
     "@aptos-labs/wallet-standard": "^0.1.0",
