@@ -138,21 +138,40 @@ This overview provides a comprehensive look at the HashPredict project, its rela
 
 ## Other Ecosystem Project
 
-Related Aptos Projects
-HashPredict is part of a growing ecosystem of innovative projects built on the Aptos blockchain. Here are some related projects that showcase the versatility and potential of Aptos:
+Related Projects Developed By our team at playsphere
 
 ### AptosChat
 
 Description: AptosChat is likely a decentralized messaging application built on the Aptos blockchain.
+
 Features: While specific details are not provided, it may include encrypted messaging, blockchain-based identity verification, and token-gated chat rooms.
+
 Potential synergies: HashPredict could potentially integrate with AptosChat for community discussions or real-time market updates.
 
+Socials: 
 
-### AptosVictorsBoard
+Website: [AptosChat](https://aptos.chat)
+
+Twitter: [X](https://x.com/AptosChat)
+
+### AptosVictors
 
 Description: AptosVictorsBoard appears to be a project related to tracking achievements or victories on the Aptos blockchain.
+
 Features: It may include leaderboards, achievement tracking, or gamification elements for Aptos-based applications.
+
 Potential synergies: HashPredict could potentially integrate with AptosVictorsBoard to showcase top predictors or create competitive elements within the prediction markets.
+
+Socials:
+
+Twitter: [X](https://x.com/AptosVictors)
+
+Website: [AptosVictors](https://aptosvictors.xyz)
+
 
 These projects, along with HashPredict, demonstrate the diverse applications being developed on the Aptos blockchain, ranging from prediction markets to communication platforms and gamification systems.
 
+
+### For Aptos Team
+
+Aptos Team Member can Create Issues to access to codebase repo
